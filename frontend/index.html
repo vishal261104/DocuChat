@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocuChat — AI-Powered Document Intelligence</title>
+  <meta name="description" content="Chat intelligently with your PDF documents using Google Gemini AI. Upload, ask, and get precise answers with source citations." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Animated background particles -->
+  <div class="bg-particles" id="bg-particles" aria-hidden="true"></div>
+
+  <!-- ── Header ── -->
+  <header class="app-header" role="banner">
+    <div class="header-inner">
+      <div class="logo-group">
+        <div class="logo-icon" aria-hidden="true">
+          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="36" height="36" rx="10" fill="url(#logoGrad)"/>
+            <path d="M10 12h16M10 18h12M10 24h8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="27" cy="24" r="5" fill="url(#dotGrad)" opacity="0.95"/>
+            <path d="M25 24l1.5 1.5L29 22.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#6C63FF"/>
+                <stop offset="1" stop-color="#00C9FF"/>
+              </linearGradient>
+              <linearGradient id="dotGrad" x1="22" y1="19" x2="32" y2="29" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FF6BBA"/>
+                <stop offset="1" stop-color="#FC5C7D"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <span class="logo-text">DocuChat</span>
+          <span class="logo-badge">AI</span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="status-pill" id="status-pill">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Connecting…</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="api-key-wrapper">
+          <label for="api-key-input" class="api-key-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            Gemini API Key
+          </label>
+          <div class="api-key-field">
+            <input
+              type="password"
+              id="api-key-input"
+              placeholder="AIza…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button class="toggle-key-btn" id="toggle-key-btn" title="Show/Hide key" aria-label="Toggle API key visibility">
+              <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <a href="/docs" target="_blank" class="btn btn-ghost btn-sm" id="api-docs-link" title="View API docs">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          API Docs
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main Layout ── -->
+  <main class="app-main" role="main">
+
+    <!-- ── Left Sidebar: Documents ── -->
+    <aside class="sidebar" id="sidebar" role="complementary" aria-label="Documents">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          Documents
+        </h2>
+        <span class="doc-count" id="doc-count">0</span>
+      </div>
+
+      <!-- Upload Zone -->
+      <div class="upload-zone" id="upload-zone" role="button" tabindex="0"
+           aria-label="Upload PDF — click or drag and drop">
+        <input type="file" id="file-input" accept=".pdf" hidden aria-label="Select PDF file" />
+        <div class="upload-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="30" fill="url(#upGrad)" opacity="0.12"/>
+            <path d="M32 42V24M24 32l8-8 8 8" stroke="url(#upGrad2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 46h24" stroke="url(#upGrad2)" stroke-width="2.5" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="upGrad" x1="2" y1="2" x2="62" y2="62"><stop stop-color="#6C63FF"/><stop offset="1" stop-color="#00C9FF"/></linearGradient>
+              <linearGradient id="upGrad2" x1="20" y1="24" x2="44" y2="46"><stop stop-color="#6C63FF"/><stop offset="1" stop-color="#00C9FF"/></linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <p class="upload-primary">Drop your PDF here</p>
+        <p class="upload-secondary">or <span class="upload-link">browse files</span></p>
+        <p class="upload-hint">PDF files only · Max 50 MB</p>
+      </div>
+
+      <!-- Upload progress -->
+      <div class="upload-progress-wrapper" id="upload-progress-wrapper" hidden>
+        <div class="upload-progress-header">
+          <span id="upload-filename" class="upload-filename-label"></span>
+          <span id="upload-pct" class="upload-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p class="upload-status-text" id="upload-status-text">Uploading…</p>
+      </div>
+
+      <!-- Document list -->
+      <div class="doc-list" id="doc-list" role="list" aria-label="Uploaded documents">
+        <div class="doc-list-empty" id="doc-list-empty">
+          <p>No documents yet.</p>
+          <p>Upload a PDF to get started.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Right Panel: Chat ── -->
+    <section class="chat-panel" aria-label="Chat">
+
+      <!-- Hero (shown when no messages) -->
+      <div class="chat-hero" id="chat-hero">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-content">
+          <h1 class="hero-title">Ask anything about<br/><span class="hero-gradient-text">your documents</span></h1>
+          <p class="hero-subtitle">Upload a PDF, then ask questions in plain English.<br/>DocuChat finds the answers with source citations.</p>
+          <div class="hero-chips" role="list" aria-label="Example questions">
+            <button class="hero-chip" data-query="Summarize the key points of this document." role="listitem">✦ Summarize key points</button>
+            <button class="hero-chip" data-query="What are the main findings or conclusions?" role="listitem">✦ Main findings</button>
+            <button class="hero-chip" data-query="What methodology or approach is described?" role="listitem">✦ Methodology</button>
+            <button class="hero-chip" data-query="List any important statistics or numbers mentioned." role="listitem">✦ Key statistics</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-container" id="messages-container" role="log" aria-live="polite" aria-label="Chat messages"></div>
+
+      <!-- Input area -->
+      <div class="input-area">
+        <div class="input-box">
+          <textarea
+            id="chat-input"
+            class="chat-textarea"
+            placeholder="Ask a question about your documents…"
+            rows="1"
+            aria-label="Chat message input"
+            aria-multiline="true"
+          ></textarea>
+          <button class="send-btn" id="send-btn" aria-label="Send message" disabled>
+            <svg id="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            <svg id="loading-icon" class="spin hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+          </button>
+        </div>
+        <p class="input-hint">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          Answers are grounded in your uploaded documents only
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ── Toast notifications ── -->
+  <div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
+
+  <!-- ── Source Modal ── -->
+  <div class="modal-overlay" id="modal-overlay" hidden aria-modal="true" role="dialog" aria-label="Source documents">
+    <div class="modal" id="sources-modal">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Source Documents
+        </h3>
+        <button class="modal-close" id="modal-close" aria-label="Close modal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
