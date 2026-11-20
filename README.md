@@ -3,11 +3,14 @@
 > **AI-Powered Document Intelligence & Retrieval-Augmented Generation (RAG) Platform**  
 > Upload PDFs and chat with them using Google Gemini 2.5 Flash, LangChain, ChromaDB, and HuggingFace dense embeddings with verified source citations.
 
+🌐 **Live Demo:** [https://docuchat-production-6aa250d1.up.railway.app](https://docuchat-production-6aa250d1.up.railway.app)
+
 [![AI - Gemini 2.5 Flash](https://img.shields.io/badge/AI-Gemini%202.5%20Flash-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://aistudio.google.com/)
 [![LangChain](https://img.shields.io/badge/LangChain-0.3-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)](https://www.langchain.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-0.5-orange?style=for-the-badge)](https://www.trychroma.com/)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.13-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Deployed on Railway](https://img.shields.io/badge/Deployed%20on-Railway-blueviolet?style=for-the-badge&logo=railway&logoColor=white)](https://docuchat-production-6aa250d1.up.railway.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 ---
