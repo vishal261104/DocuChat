@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 # LangChain imports
@@ -99,8 +98,6 @@ app.add_middleware(
 
 # Serve frontend static files
 FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
-if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 
 # ─── Pydantic models ─────────────────────────────────────────────────────────
@@ -170,14 +167,6 @@ def retrieve_context(query: str, k: int = RETRIEVAL_K):
 
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
-
-@app.get("/", include_in_schema=False)
-async def serve_frontend():
-    """Serve the frontend SPA."""
-    index = FRONTEND_DIR / "index.html"
-    if index.exists():
-        return FileResponse(str(index))
-    return {"message": "DocuChat API is running. Frontend not found."}
 
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])
@@ -380,3 +369,9 @@ async def delete_document(doc_id: str):
         message=f"'{info['name']}' deleted successfully.",
         deleted_chunks=len(chunk_ids),
     )
+
+
+# ─── Static frontend (mount LAST so API routes take priority) ─────────────────
+# Mounts at "/" so the browser can resolve /style.css, /app.js from index.html
+if FRONTEND_DIR.exists():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
