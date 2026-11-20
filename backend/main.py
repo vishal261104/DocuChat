@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -46,6 +46,7 @@ RETRIEVAL_K = 4
 _embeddings: Optional[HuggingFaceEmbeddings] = None
 _vector_store: Optional[Chroma] = None
 _llm = None
+_current_api_key: Optional[str] = None  # track key so LLM is rebuilt on key change
 
 # In-memory document registry {doc_id: {name, pages, chunk_ids}}
 document_registry: dict = {}
@@ -72,11 +73,12 @@ def get_vector_store() -> Chroma:
 
 
 def get_llm(api_key: str):
-    """Return an LLM instance; create a new one when the key changes."""
-    global _llm
-    if _llm is None:
+    """Return an LLM instance; re-create when the API key changes."""
+    global _llm, _current_api_key
+    if _llm is None or api_key != _current_api_key:
         logger.info("Initialising Gemini LLM")
         _llm = init_chat_model(LLM_MODEL, api_key=api_key)
+        _current_api_key = api_key
     return _llm
 
 
@@ -134,6 +136,7 @@ class DeleteResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     documents_indexed: int
+    total_chunks: int
     embedding_model: str
     llm_model: str
 
@@ -149,11 +152,15 @@ def retrieve_context(query: str, k: int = RETRIEVAL_K):
 
     for i, (doc, score) in enumerate(results):
         context_parts.append(f"[Source {i+1}]\n{doc.page_content}")
+        # ChromaDB returns L2 distance (lower = more similar).
+        # Convert to a 0–100 similarity percentage for display.
+        similarity_pct = round(max(0.0, 1.0 / (1.0 + float(score))) * 100, 1)
         source_docs.append(
             {
                 "content": doc.page_content[:400] + ("..." if len(doc.page_content) > 400 else ""),
                 "metadata": doc.metadata,
                 "relevance_score": round(float(score), 4),
+                "similarity_pct": similarity_pct,
                 "source_index": i + 1,
             }
         )
@@ -176,15 +183,17 @@ async def serve_frontend():
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 async def health_check():
     """Check service health and stats."""
+    total_chunks = 0
     try:
         vs = get_vector_store()
         total_chunks = vs._collection.count()
     except Exception:
-        total_chunks = 0
+        pass
 
     return HealthResponse(
         status="healthy",
         documents_indexed=len(document_registry),
+        total_chunks=total_chunks,
         embedding_model=EMBEDDING_MODEL,
         llm_model=LLM_MODEL,
     )
@@ -196,8 +205,11 @@ async def upload_document(file: UploadFile = File(...)):
     Upload a PDF, chunk it, embed it, and store in ChromaDB.
     Returns document metadata and chunk count.
     """
-    if not file.filename.endswith(".pdf"):
+    if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+
+    if file.size and file.size > 50 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File size exceeds 50 MB limit.")
 
     doc_id = str(uuid.uuid4())
     save_path = UPLOAD_DIR / f"{doc_id}_{file.filename}"
@@ -205,8 +217,12 @@ async def upload_document(file: UploadFile = File(...)):
     # Save uploaded file
     try:
         content = await file.read()
+        if len(content) > 50 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="File size exceeds 50 MB limit.")
         save_path.write_bytes(content)
         logger.info("Saved upload: %s", save_path)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
 
@@ -214,6 +230,10 @@ async def upload_document(file: UploadFile = File(...)):
     try:
         loader = PyPDFLoader(str(save_path))
         pages = loader.load()
+
+        if not pages:
+            save_path.unlink(missing_ok=True)
+            raise HTTPException(status_code=422, detail="PDF appears to be empty or unreadable.")
 
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=CHUNK_SIZE,
@@ -227,6 +247,8 @@ async def upload_document(file: UploadFile = File(...)):
             split.metadata["filename"] = file.filename
 
         logger.info("Split '%s' into %d chunks", file.filename, len(splits))
+    except HTTPException:
+        raise
     except Exception as e:
         save_path.unlink(missing_ok=True)
         raise HTTPException(status_code=500, detail=f"Failed to process PDF: {e}")
@@ -253,7 +275,7 @@ async def upload_document(file: UploadFile = File(...)):
         "filename": file.filename,
         "pages": len(pages),
         "chunks_created": len(chunk_ids),
-        "message": f"✅ '{file.filename}' processed and indexed successfully!",
+        "message": f"'{file.filename}' processed and indexed successfully!",
     }
 
 
@@ -355,6 +377,6 @@ async def delete_document(doc_id: str):
     del document_registry[doc_id]
 
     return DeleteResponse(
-        message=f"✅ '{info['name']}' deleted successfully.",
+        message=f"'{info['name']}' deleted successfully.",
         deleted_chunks=len(chunk_ids),
     )

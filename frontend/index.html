@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DocuChat — AI-Powered Document Intelligence</title>
-  <meta name="description" content="Chat intelligently with your PDF documents using Google Gemini AI. Upload, ask, and get precise answers with source citations." />
+  <meta name="description" content="Chat with your PDF documents using Google Gemini AI. Upload, ask, and get precise answers with source citations." />
+  <meta name="theme-color" content="#07080f" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -153,6 +154,12 @@
 
       <!-- Input area -->
       <div class="input-area">
+        <div class="input-row-top">
+          <button id="clear-chat-btn" class="btn btn-ghost btn-sm hidden" title="Clear conversation" aria-label="Clear chat">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            Clear
+          </button>
+        </div>
         <div class="input-box">
           <textarea
             id="chat-input"
@@ -174,7 +181,7 @@
         </div>
         <p class="input-hint">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          Answers are grounded in your uploaded documents only
+          Answers are grounded in your uploaded documents only &nbsp;·&nbsp; <kbd>Enter</kbd> to send
         </p>
       </div>
     </section>
